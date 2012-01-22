@@ -84,6 +84,11 @@ void draw_ruler() {
 	SSN = LOW;
 
 	switch (width) {
+	case VERYNARROW:
+		setCursor(6, 0);
+		for (col = 0; col < NUM_CHANNELS; col++)
+			txData(narrow_ruler[col]);
+		break;
 	case NARROW:
 		setCursor(6, 0);
 		for (col = 0; col < NUM_CHANNELS; col++)
@@ -111,6 +116,16 @@ void draw_freq() {
 	SSN = LOW;
 
 	switch (width) {
+	case VERYNARROW:
+		setCursor(7, 18);
+		printf("%d", center_freq - 1);
+
+		setCursor(7, 58);
+		printf("%d", center_freq);
+
+		setCursor(7, 98);
+		printf("%d", center_freq + 1);
+		break;
 	case NARROW:
 		setCursor(7, 18);
 		printf("%d", center_freq - 2);
@@ -176,6 +191,9 @@ void radio_setup() {
 void set_filter() {
 	/* channel spacing should fit within 80% of channel filter bandwidth */
 	switch (width) {
+	case VERYNARROW:
+		MDMCFG4 = 0xFC; /* 58 kHz. Larger than 80%, but who cares */
+		break;
 	case NARROW:
 		MDMCFG4 = 0xEC; /* 67.708333 kHz */
 		break;
@@ -253,6 +271,11 @@ u16 set_center_freq(u16 freq) {
 	u8 i;
 
 	switch (width) {
+	case VERYNARROW:
+		margin = VERYNARROW_MARGIN;
+		step = VERYNARROW_STEP;
+		spacing = VERYNARROW_SPACING;
+		break;
 	case NARROW:
 		margin = NARROW_MARGIN;
 		step = NARROW_STEP;
@@ -390,6 +413,9 @@ void poll_keyboard() {
 	vstep = (height == TALL) ? TALL_STEP : SHORT_STEP;
 
 	switch (width) {
+	case VERYNARROW:
+		hstep = VERYNARROW_STEP;
+		break;
 	case NARROW:
 		hstep = NARROW_STEP;
 		break;
@@ -408,6 +434,9 @@ void poll_keyboard() {
 	case 'N':
 		set_width(NARROW);
 		break;
+	case 'V':
+		set_width(VERYNARROW);
+		break;
 	case 'U':
 		set_width(ULTRAWIDE);
 		break;
@@ -417,6 +446,9 @@ void poll_keyboard() {
 			set_width(NARROW);
 			break;
 		case NARROW:
+			set_width(VERYNARROW);
+			break;
+		case VERYNARROW:
 			set_width(ULTRAWIDE);
 			break;
 		default:
@@ -535,8 +567,8 @@ reset:
 			/* plot previous measurement while waiting for RSSI measurement */
 			plot(ch);
 
-			/* measurement needs a bit more time in narrow mode */
-			if (width == NARROW)
+			/* measurement needs a bit more time in narrow or verynarrow mode */
+			if (width == NARROW || (width == VERYNARROW))
 				for (i = 350; i-- ;);
 
 			/* read RSSI */
