@@ -30,9 +30,6 @@
  * IMME is so afflicted. See this link for more info:
  * <http://madscientistlabs.blogspot.com/2011/03/fix-for-im-me-specan-frequency-offset.html>
  */
-#ifndef FREQ_REF
-#define FREQ_REF	(27000000)
-#endif
 
 /* frequencies in Hz */
 #define DEFAULT_FREQ     (902382395)
@@ -61,7 +58,7 @@ typedef struct {
 	u8 freq2;
 	u8 freq1;
 	u8 freq0;
-	
+
 	/* frequency calibration */
 	u8 fscal3;
 	u8 fscal2;
@@ -75,9 +72,7 @@ typedef struct {
 void clear();
 void putchar(char c);
 u8 getkey();
-void radio_setup();
 void printHeader();
-void set_radio_freq(u32 freq);
 u32 calibrate_freq(u32 freq, u8 ch);
 u32 set_center_freq(u16 freq);
 void tune(u8 ch);

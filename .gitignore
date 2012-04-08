@@ -8,3 +8,8 @@
 *.lnk
 *.ihx
 *.hex
+*.cdb
+*.lk
+*.omf
+tags
+Old/
