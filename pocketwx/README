@@ -1,15 +1,18 @@
-Pocket Spectrum Analyzer
+Pocket Weather Station 
 
 This is alternative firmware for the Girl Tech IM-Me
-(http://www.girltech.com/electronics-imMe.aspx) that implements a basic
-spectrum analyzer.
+(http://www.girltech.com/electronics-imMe.aspx) that implements a receiver
+for the Davis Instruments wireless Integrated Sensor Suite (ISS).  It is
+compatible with both the ISS supplied with the Vantage Pro 2 and the
+Vantage Vue.
+
 
 WARNING!  You could destroy your device if you try to use this software.  You
-certainly would have a hard time getting your device to work as originally
-intended ever again.  There is no known way to recover the original firmware.
+certainly will not be able to get your device to work as originally intended
+ever again.  There is no known way to recover the original firmware.
 
 
-installation:
+Installation:
 
 For more complete instructions, see:
 
@@ -18,76 +21,61 @@ http://travisgoodspeed.blogspot.com/2010/03/im-me-goodfet-wiring-tutorial.html
 Abbreviated instructions follow:
 
 1. Acquire or build a GoodFET (http://goodfet.sourceforge.net/).  There are
-other ways to program the IM-Me, but you're on your own.
+other ways to program the IM-Me, but you're on your own.  Trying to use
+something like a Bus Pirate or an Arduino will only lead to frustration, as
+the programming is sensitive to timing.
 
 2. Wire your IM-Me to the GoodFET according to
-http://www.flickr.com/photos/travisgoodspeed/4322361457/
+    http://www.flickr.com/photos/travisgoodspeed/4322361457/
 
-3. goodfet.cc flash specan.hex
-
-Alternatively you may compile from source with sdcc and install with "make
-install".
+3. Compile from source with sdcc and install with "make && make install".
 
 
-usage:
+Usage:
 
-The LCD shows the relative power levels received across a range of frequencies
-indicated in MHz along the bottom.
+The software currently implements a debug display that shows the particulars
+of the channel being monitored and the data being received.
 
-bandwidth settings:
+Frequency selection:
 
-There are three bandwidth modes: wide (default), narrow, and ultrawide.  Wide
-mode displays 26.4 MHz of bandwidth in 200 kHz increments.  Narrow mode
-displays 6.6 MHz of bandwidth in 50 kHz increments.  Ultrawide mode displays 88
-MHz of bandwidth in 667 kHz increments.  You can cycle through the modes with
-the "Menu" button or select a mode with the "W", "N", or "U" buttons.
+The current channel frequency can be changed with the "A", "S", "D", and "F"
+keys to step -1 MHz, -100 kHz, -10 kHz, and -1 kHz.  The "H", "J", "K", and
+"L" keys step the same way in positive steps.
 
-frequency selection:
+Sleep:
 
-Set the frequency by scrolling with the left or right arrow buttons.  The
-supported ranges are 281 - 361, 378 - 481, and 749 - 962 MHz.
-
-power level resolution:
-
-There are two power level resolution modes: short (default) and tall.  Short
-mode displays six bits of power level information.  Tall mode displays eight
-bits of power level information.  You can toggle between the two modes with the
-"Bye!" button or select a mode with the "S" or "T" buttons.
-
-power level scrolling:
-
-Scroll up and down with the smile wheel or the "Q" and "A" buttons.  Scrolling
-is often necessary when using tall mode.  Tip: You can scroll faster in short
-mode and then switch back to tall mode.
-
-max hold:
-
-Press the "M" button to active or deactivate max hold.  The maximum power level
-received during the current activation of max hold is displayed as a dot above
-the normal bar graph display.  Max hold is automatically deactivated whenever
-the frequency or bandwidth settings change.
+The power button will put the unit to sleep.
 
 
-thanks:
+Thanks:
 
 Thanks to Dave for an incredible job of reverse engineering the IM-Me and
 sharing his code:
+    http://daveshacks.blogspot.com/
 
-http://daveshacks.blogspot.com/
+Thanks to Travis Goodspeed for developing the GoodFET and sharing his code:
+    http://travisgoodspeed.blogspot.com/
 
-Thanks to Travis Goodspeed for developing the GoodFET, introducing me to the
-IM-Me, and sharing his code:
+Thanks to Michael Ossmann for the very cool Pocket Spectrum Analyzer:
+    http://greatscottgadgets.com/contact.html
 
-http://travisgoodspeed.blogspot.com/
+Thanks to Joby Taffey for PinkOS. Probably wouldn't have dared to plumb
+the depths of packet handling without having his code as an example.
+    http://blog.hodgepig.org/
 
-
-home:
+Home:
 
 You can find the most recent version of this software at:
+    https://github.com/dekay/im-me
 
-http://www.ossmann.com/sa/
+TODO:
+- Implement frequency hopping
+- Implement error handling
+- Interpret and display the data
+- Properly correct the offset frequency
+- IFDEF the register settings for a 26 MHz IM-Me.  Mine is 27 MHz
+- General code cleanup
 
+Author:
 
-author:
-
-Michael Ossmann <mike@ossmann.com>
+DeKay @ http://madscientistlabs.blogspot.ca/
