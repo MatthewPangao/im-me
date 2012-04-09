@@ -35,6 +35,23 @@ __bit packetDone;
 const __data u8 *pktbuf;
 u8 ch;
 
+/* CRC calculation from http://www.menie.org/georges/embedded/ */
+u16 crc16_ccitt(const __data u8 *buf, u8 len)
+{
+    u16 crc = 0;
+    while( len-- ) {
+        int i;
+        crc ^= *(char *)buf++ << 8;
+        for( i = 0; i < 8; ++i ) {
+            if( crc & 0x8000 )
+                crc = (crc << 1) ^ 0x1021;
+            else
+                crc = crc << 1;
+        }
+    }
+    return crc;
+}
+
 void printDebugHeader() {
     /* IM-ME display is 132W x 64H for a 22 x 8 character display */
     SSN = LOW;
@@ -63,13 +80,14 @@ void printDebugFrequency(u32 freq, u8 ch) {
 }
 
 void printDebugPacket() {
+    u16 crc = crc16_ccitt(pktbuf, 6);
     SSN = LOW;
     setCursor(1, 30);
     printf("%02x %02x %02x %02x", pktbuf[0], pktbuf[1], pktbuf[2], pktbuf[3]);
     setCursor(2, 30);
     printf("%02x %02x %02x %02x", pktbuf[4], pktbuf[5], pktbuf[6], pktbuf[7]);
     setCursor(3, 24);
-    printf("OK ");
+    printf("%04x", crc);
     setCursor(4, 24);
     printf("%3u ", pktbuf[9]);
     setCursor(5, 30);
