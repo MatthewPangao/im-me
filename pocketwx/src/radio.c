@@ -111,6 +111,8 @@ void radio_init(void) {
                         // Disable CRC check
                         // Fixed packet length mode
     FSCTRL1 = 0x06;     // frequency synthesizer control
+    FSCTRL0 = 248;      // TODO. This is the freq offset for my IM-ME.
+                        // Make this adaptive later.
     MDMCFG4 = 0xC9;     // modem configuration
     MDMCFG3 = 0x75;     // modem configuration
     MDMCFG2 = 0x11;     // modem configuration
@@ -121,7 +123,9 @@ void radio_init(void) {
     DEVIATN = 0x13;     // modem deviation setting
     MCSM0 = 0x18;       // main radio control state machine configuration
                         //  - Autocal when going from IDLE to RX
-    FOCCFG = 0x17;      // frequency offset compensation configuration
+    FOCCFG = 0x37;      // frequency offset compensation configuration
+                        // Gate freq offset comp until CARRIER_SENSE high
+                        // Limit freq offset comp to +/-BWchan / 2
     FSCAL3 = 0xE9;      // frequency synthesizer calibration
     FSCAL2 = 0x2A;      // frequency synthesizer calibration
     FSCAL1 = 0x00;      // frequency synthesizer calibration
