@@ -179,7 +179,7 @@ reset:
             printDebugFrequency(centerFreq, ch);
         }
 
-		/* go to sleep (more or less a shutdown) if power button pressed */
+		/* Go to sleep (more or less a shutdown) if power button pressed */
 		if (sleepy) {
 			clear();
 			sleepMillis(1000);
@@ -190,7 +190,7 @@ reset:
 			while (1) {
 				sleep();
 
-				/* power button depressed long enough to wake? */
+				/* Power button depressed long enough to wake? */
 				sleepy = 0;
 				for (i = 0; i < DEBOUNCE_COUNT; i++) {
 					sleepMillis(DEBOUNCE_PERIOD);
@@ -199,7 +199,7 @@ reset:
 				if (!sleepy) break;
 			}
 
-			/* reset on wake */
+			/* Reset on wake */
 			goto reset;
 		}
     }
@@ -215,7 +215,7 @@ reset:
 //
 //         SSN = HIGH;
 
-/* handle incoming radio packet */
+/* Handle incoming packet. This is called within an ISR so keep it short. */
 void packet_rx_callback(const __data u8 *buf)
 {
     packetDone = 1;

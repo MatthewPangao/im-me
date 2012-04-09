@@ -213,7 +213,7 @@ void rftxrx_isr(void) __interrupt RFTXRX_VECTOR
 }
 
 /*
- * This is the nterrupt vector for RF_VECTOR (#16)
+ * This is the interrupt vector for RF_VECTOR (#16)
  * All other general interrupts flags are in the RFIF register.
  * At some point we'll also want to work with IRQ_TIMEOUT
  */

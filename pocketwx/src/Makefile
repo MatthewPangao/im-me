@@ -1,4 +1,5 @@
 # Copyright 2010 Travis Goodspeed, Michael Ossmann
+# Copyright 2012 DeKay @ http://madscientistlabs.blogspot.com/
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,4 +36,4 @@ install: pocketwx.hex
 verify: pocketwx.hex
 	goodfet.cc verify pocketwx.hex
 clean:
-	rm -f *.hex *.ihx *.rel *.asm *.lst *.rst *.sym *.lnk *.map *.mem
+	rm -f *.hex *.ihx *.rel *.asm *.lst *.rst *.sym *.lnk *.map *.mem *.cdb *.lk *.omf

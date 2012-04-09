@@ -1,9 +1,25 @@
-This repository contains software for the Girl Tech IM-Me.
+This repository contains software to receive transmissions from a Davis
+wireless Integrated Sensor Suite (ISS).  The CC1021-based transmitter in
+the ISS can be received by the CC1110 in the IM-ME.
 
-To start with, the specan directory contains the source code for the pocket
-spectrum analyzer application first described here:
+The pocketwx directory contains all the source code for this application.
+You can read more about this project at:
 
-http://ossmann.blogspot.com/2010/03/16-pocket-spectrum-analyzer.html
+http://madscientistlabs.blogspot.ca/search/label/Davis%20VP2
 
+You will need:
+- a Davis ISS to listen to
+- an IM-ME.  Right now the code is set for a unit that has a 27 MHz crystal
+  but that will get fixed one of these days to work with 26 MHz units as
+  well.
+- a GoodFET (http://goodfet.sourceforge.net/)
+- the sdcc compiler
 
-So cool!  So connected!
+Thanks to:
+- Michael Ossman (http://greatscottgadgets.com/contact.html) for the IM-ME
+  based spectrum analyzer on which this code is based
+- Travis Goodspeed (http://travisgoodspeed.blogspot.ca) for the GoodFET
+- Joby Taffey (http://blog.hodgepig.org/) for PinkOS
+- Dave (http://daveshacks.blogspot.ca/) for the original IM-ME reverse
+  engineering effort.  Just amazing.
+
