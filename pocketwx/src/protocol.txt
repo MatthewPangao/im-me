@@ -1,13 +1,18 @@
 This is the protocol used by the Davis Weather wiressless Integrated Sensor
 Suite (ISS) to communicate its readings back to the console.
 
-Packets are sent from the ISS every 2.5 seconds for an ISS set to a transmit ID of zero.  The rate gets slower as the transmit ID increases up to every 3 seconds (approximate: Davis Manual says "Wind Speed Update Interval: 2.5 to 3 seconds."  The data rate is 19.2 kbps and is transmitted from the ISS with least significant bit first.  More here:
+Packets are sent from the ISS every 2.5 seconds for an ISS set to a transmit
+ID of zero.  The rate gets slower as the transmit ID increases by 1/16 of a
+second for every station ID number e.g. ID 1 transmits at an interval of
+2.5625 seconds (ref: Davis Serial Protocol document).  The data rate is 19.2
+kbps and is transmitted from the ISS with least significant bit first.  More
+here:
 
 http://madscientistlabs.blogspot.ca/2012/03/first-you-get-sugar.html
 
-The starting point for reverse engineering the protocol is the output from
-the STRMON command when connected to the console with an LVTTL serial
-connection.  This connection is discussed in detail in:
+The starting point for reverse engineering the protocol is the output from the
+STRMON command when connected to the console with an LVTTL serial connection.
+This connection is discussed in detail in:
 
 http://madscientistlabs.blogspot.ca/2011/01/davis-weatherlink-software-not-required.html
 
@@ -22,18 +27,21 @@ Let's use the following STRMON snippet as an example.
 6 = 78
 7 = 75
 
-The eight bytes come from the ISS in this order.  However, each byte comes in from the ISS with least significant bit first.  The bit order has to be
-flipped before we can work with it.  All values in the example above are in hex.  The ISS always transmits its data in Imperial units (fahrenheit, mph, inches Hg).  Conversion to other units is done in the console.
+The eight bytes come from the ISS in this order.  However, each byte comes in
+from the ISS with least significant bit first.  The bit order has to be
+flipped before we can work with it.  All values in the example above are in
+hex. 
 
-Byte 0: This is a header.  The upper nibble is the sensor the data is from.  The best guess right now is as follows, but these values are still to be confirmed.
-  4 = probably UV
-  5 = probably rainrate
-  6 = probably solar
-  9 = probably wind
-  a = probably temperature
-  c = probably humidity
-  e = probably rain
-  f = probably leaf
+Byte 0: This is a header.  The upper nibble is the sensor the data is from, as
+follows.
+
+  4 = ? 
+  5 = ?
+  6 = ?
+  8 = temperature
+  9 = ?
+  a = humidity
+  e = ?
 
 The lower nibble is the transmitter ID.
   0 = ISS
@@ -46,18 +54,62 @@ Ref: http://www.wxforum.net/index.php?topic=10531.msg101520#msg101520
 
 Byte 1: Wind speed in mph.  Wind speed is updated every transmission.  Simple.
 
-Byte 2: Wind direction from 1 to 360 degrees.  Wind direction is updated every transmission.  The wind reading is contained in a singly byte that limits the maximum value to 255.  It is converted to a range of 1 to 360 degrees by scaling the byte value by 360 / 255.  A wind speed reading of 0xd3 = 211 (decimal) * 360 / 255 = 297.  
+Byte 2: Wind direction from 1 to 360 degrees.  Wind direction is updated every
+transmission.  The wind reading is contained in a single byte that limits the
+maximum value to 255.  It is converted to a range of 1 to 360 degrees by
+scaling the byte value by 360 / 255.  A wind speed reading of 0xd3 = 211
+(decimal) * 360 / 255 = 297.  
 
-Davis says that 0 indicates it can't get a reading, so you'd never see wind straight out of the North unless your wind vane is broken.
+Davis says that 0 indicates it can't get a reading, so you'd never see wind
+straight out of the North unless your wind vane is broken.
 
 Reference: http://www.wxforum.net/index.php?topic=10531.msg101523#msg101523
 
-Bytes 3 - 5: Depend on the sensor being read at the time.  Need to work through these.
+Bytes 3 - 5: Depend on the sensor being read at the time.  Need to work
+through these.  This is what is known now.
+
+Message a:
+
+Humidity is represented as a single byte: byte 4. The humidity reading is
+noisy.  The capture below was taken while the console display was rock solid,
+yet the byte representing humidity is bouncing around between 0x38 and 0x3b.
+The console must do some averaging.
+
+a0 06 52 83 38 00 5a c8
+a0 06 57 83 3b 00 b3 de
+a0 06 58 83 39 00 01 52
+a0 07 5d 83 3b 00 71 24
+a0 09 58 83 39 00 64 ab
+a0 09 59 83 39 00 12 1f
+a0 0a 58 83 38 00 b9 48
+a0 0a 59 83 38 00 cf fc
+
+The displayed humidity at the time was 90%.  Based on comparison with some
+other captures, the sensitivity is roughly 1.4% per bit.  The response appears
+to be either nonlinear or dependent on temperature, because different captures
+will give different sensitivities.  More work is required here.
+
+Message e:
+Byte 3 and 4 are temperature.  The first byte is MSB and the second LSB.  The
+value is signed with 0x0000 representing 0F.  This reading in the old version
+of the ISS was taked from an analog sensor and measured by an A/D.  The newer
+ISS uses a digital sensor but still represents the data in the same way.  160
+counts (0xa0) represents 1 degree F.  A message of
+
+80 04 70 0f 99 00 91 11
+
+represents temperature as 0x0f99, or 3993 decimal.  Divide 3993 by 160 to get
+the console reading of 25.0F
 
 Byte 6: High byte of the 16 bit CRC (0x78 in our example above)
 Byte 7: Low byte of the 16 bit CRC (0x75 in our example above)
 
-The CRC is the same as that on the serial interface and is documented in the Davis "VantageSerialProtocolDocs_v230.pdf" document.  The first six bytes can be run through the calcuation and checked against the seventh and eight bytes.  Alternatively, all eight bytes can be run through the calculation and the result will be zero if the CRC is valid.  Pocketwx uses the CRC algorithm from http://www.menie.org/georges/embedded
+The CRC is the same as that on the serial interface and is documented in the
+Davis "VantageSerialProtocolDocs_v230.pdf" document.  The first six bytes can
+be run through the calcuation and checked against the seventh and eight bytes.
+Alternatively, all eight bytes can be run through the calculation and the
+result will be zero if the CRC is valid.  Pocketwx uses the CRC algorithm from
+http://www.menie.org/georges/embedded
 
 To summarize:
 - Byte 0 is a header.
@@ -70,13 +122,21 @@ To summarize:
 
 From my notes to help work the rest of this out:
 
-Signed values from the weather station console are two's complement, least significant byte first.  Note that pressure is measured by the console and not the ISS, so don't expect it to appear in the STRMON output.
+Signed values from the weather station console are two's complement, least
+significant byte first.  Note that pressure is measured by the console and not
+the ISS, so don't expect it to appear in the STRMON output.
 
-Update rates below are from Davis' specs and manuals.  Data sizes and signing are as per the loop command and are what one might expect out of STRMON but not always.  I noted above that wind direction via STRMON is actually one byte unsigned.  There may be other exceptions.
-- Outside temp: 10 seconds in 10th of a degree F, two bytes signed
+Update rates below are from Davis' specs and manuals.  Data sizes and signing
+are as per the loop command and are what one might expect out of STRMON but
+not always.  I noted above that wind direction via STRMON is actually one byte
+unsigned.  There may be other exceptions.
+- Outside temp: 10 seconds in 10th of a degree F, two bytes signed (message e
+  in STRMON, bytes 3 and 4).
 - Winds speed: 2.5 seconds, one byte unsigned  (Byte 1 in STRMON, always)
-- Wind direction: 2.5 seconds, two bytes unsigned from 1 to 360  (<-- one byte via STRMON, Byte 2 always)
-- Outside humidity: 50 seconds in percent, one byte unsigned
+- Wind direction: 2.5 seconds, two bytes unsigned from 1 to 360  (one byte
+  via STRMON, Byte 2 always)
+- Outside humidity: 50 seconds in percent, one byte unsigned (message a in
+  STRMON, byte 4)
 - Rain: 10 seconds.  I believe this will be in counts of 0.01.
 - Pressure: in Hg/1000, two bytes unsigned  (Rate????)
 - Leaf Wetness: 40 seconds
@@ -87,7 +147,8 @@ Update rates below are from Davis' specs and manuals.  Data sizes and signing ar
 
 I think all other outdoor related values are calculated in the console.
 
-The only headers (ie Byte 0) I see from my wireless VP2 with no additional sensors connected are:
+The only headers (ie Byte 0) I see from my wireless VP2 with no additional
+sensors connected are:
 
 40 50 60 80 90 a0 e0
 
@@ -100,6 +161,8 @@ The rates they show up at are:
 -a0 shows alternately every 40 seconds and 10 seconds (interesting!)
 -e0 shows every 10 seconds
 
-These rates along with the rates given in the Davis manual should make correlating the data a lot easier.
+These rates along with the rates given in the Davis manual should make
+correlating the data a lot easier.
 
-Copyright DeKay @ madscientistlabs.blogspot.com under the Creative Commons Attribution-ShareAlike License 3.0
+Copyright DeKay @ madscientistlabs.blogspot.com under the Creative Commons
+Attribution-ShareAlike License 3.0
