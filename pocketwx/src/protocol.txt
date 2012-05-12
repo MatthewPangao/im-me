@@ -41,9 +41,9 @@ follows.
   8 = temperature
   9 = ?
   a = humidity
-  e = ?
+  e = rain
 
-The lower nibble is the transmitter ID.
+The lowest three bits in the low order nibble is the transmitter ID.
   0 = ISS
   1 = Anemometer transmitter
   4 = Temperature / humidity station
@@ -51,6 +51,13 @@ The lower nibble is the transmitter ID.
   7 = Temperature / humidity station
 
 Ref: http://www.wxforum.net/index.php?topic=10531.msg101520#msg101520
+
+Bit 3 in the low order nibble of byte 0 indicates if the transmitter battery
+is low. The bit is set to zero if the battery is OK, but is apparently only
+set if the transmitter needs to run off the battery and not the solar-charged
+supercap.
+
+Reference: http://www.wxforum.net/index.php?topic=15273.msg149673#msg149673
 
 Byte 1: Wind speed in mph.  Wind speed is updated every transmission.  Simple.
 
@@ -65,31 +72,21 @@ straight out of the North unless your wind vane is broken.
 
 Reference: http://www.wxforum.net/index.php?topic=10531.msg101523#msg101523
 
+Byte 6: High byte of the 16 bit CRC (0x78 in our example above)
+Byte 7: Low byte of the 16 bit CRC (0x75 in our example above)
+
+The CRC is the same as that on the serial interface and is documented in the
+Davis "VantageSerialProtocolDocs_v230.pdf" document.  The first six bytes can
+be run through the calcuation and checked against the seventh and eight bytes.
+Alternatively, all eight bytes can be run through the calculation and the
+result will be zero if the CRC is valid.  Pocketwx uses the CRC algorithm from
+http://www.menie.org/georges/embedded
+
 Bytes 3 - 5: Depend on the sensor being read at the time.  Need to work
 through these.  This is what is known now.
 
-Message a:
+Message 8:
 
-Humidity is represented as a single byte: byte 4. The humidity reading is
-noisy.  The capture below was taken while the console display was rock solid,
-yet the byte representing humidity is bouncing around between 0x38 and 0x3b.
-The console must do some averaging.
-
-a0 06 52 83 38 00 5a c8
-a0 06 57 83 3b 00 b3 de
-a0 06 58 83 39 00 01 52
-a0 07 5d 83 3b 00 71 24
-a0 09 58 83 39 00 64 ab
-a0 09 59 83 39 00 12 1f
-a0 0a 58 83 38 00 b9 48
-a0 0a 59 83 38 00 cf fc
-
-The displayed humidity at the time was 90%.  Based on comparison with some
-other captures, the sensitivity is roughly 1.4% per bit.  The response appears
-to be either nonlinear or dependent on temperature, because different captures
-will give different sensitivities.  More work is required here.
-
-Message e:
 Byte 3 and 4 are temperature.  The first byte is MSB and the second LSB.  The
 value is signed with 0x0000 representing 0F.  This reading in the old version
 of the ISS was taked from an analog sensor and measured by an A/D.  The newer
@@ -101,15 +98,37 @@ counts (0xa0) represents 1 degree F.  A message of
 represents temperature as 0x0f99, or 3993 decimal.  Divide 3993 by 160 to get
 the console reading of 25.0F
 
-Byte 6: High byte of the 16 bit CRC (0x78 in our example above)
-Byte 7: Low byte of the 16 bit CRC (0x75 in our example above)
+Message a:
 
-The CRC is the same as that on the serial interface and is documented in the
-Davis "VantageSerialProtocolDocs_v230.pdf" document.  The first six bytes can
-be run through the calcuation and checked against the seventh and eight bytes.
-Alternatively, all eight bytes can be run through the calculation and the
-result will be zero if the CRC is valid.  Pocketwx uses the CRC algorithm from
-http://www.menie.org/georges/embedded
+Humidity is represented as two bytes in Byte 3 and Byte 4 as a ten bit value.
+Bits 5 and 4 in Byte 4 are the two most significant bits.  Byte 3 is the
+low order byte. The ten bit value is then 10x the humidity value displayed on
+the console.  The function of the four low order bits in Byte 3 that cause the
+apparent jitter are not known.  Here is an example.
+
+a0 06 52 83 38 00 5a c8
+
+((0x83 >> 4) << 8) + 0x52 = 131 + 768 = 899 = 89.9% Relative Humidity
+
+The displayed humidity at the time was 90%.  The console rounds the value.
+
+Reference: http://madscientistlabs.blogspot.ca/2012/05/its-not-heat.html
+
+Message e:
+
+Rain is in Byte 3.  It is a running total of bucket tips that wraps back
+around to 0 eventually from the ISS.  It is up to the console to keep track of
+changes in this byte.  The example below is bound to confuse: the leading
+value is the elapsed time since data collection started (in seconds), all
+bytes have been converted to decimal, and the last two CRC bytes have been
+stripped off.  A tip of the rain bucket causes the value the ISS is sending
+from a steady value of 40 to a new value of 41.
+
+2426.3,224,16,33,40,1,0
+2436.6,224,11,36,40,1,0
+2446.8,224,9,29,41,2,0
+2457.1,224,10,29,41,3,0
+
 
 To summarize:
 - Byte 0 is a header.
@@ -136,8 +155,8 @@ unsigned.  There may be other exceptions.
 - Wind direction: 2.5 seconds, two bytes unsigned from 1 to 360  (one byte
   via STRMON, Byte 2 always)
 - Outside humidity: 50 seconds in percent, one byte unsigned (message a in
-  STRMON, byte 4)
-- Rain: 10 seconds.  I believe this will be in counts of 0.01.
+  STRMON, bytes 3 and 4)
+- Rain: 10 seconds.  This is in counts of 0.01 inches.
 - Pressure: in Hg/1000, two bytes unsigned  (Rate????)
 - Leaf Wetness: 40 seconds
 - Soil Moisture: 40 seconds
