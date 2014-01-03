@@ -43,12 +43,7 @@ follows.
   a = humidity
   e = rain
 
-The lowest three bits in the low order nibble is the transmitter ID.
-  0 = ISS
-  1 = Anemometer transmitter
-  4 = Temperature / humidity station
-  5 = Envoy retransmitting ISS
-  7 = Temperature / humidity station
+The lowest three bits in the low order nibble is the transmitter ID, set via dipswitches inside the unit.
 
 Ref: http://www.wxforum.net/index.php?topic=10531.msg101520#msg101520
 
