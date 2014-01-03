@@ -35,15 +35,16 @@ hex.
 Byte 0: This is a header.  The upper nibble is the sensor the data is from, as
 follows.
 
-  4 = ? 
+  4 = UV Index
   5 = ?
-  6 = ?
+  6 = solar radiation
   8 = temperature
   9 = ?
   a = humidity
   e = rain
 
-The lowest three bits in the low order nibble is the transmitter ID, set via dipswitches inside the unit.
+The lowest three bits in the low order nibble is the transmitter ID, set via dipswitches
+inside the unit.
 
 Ref: http://www.wxforum.net/index.php?topic=10531.msg101520#msg101520
 
@@ -79,6 +80,32 @@ http://www.menie.org/georges/embedded
 
 Bytes 3 - 5: Depend on the sensor being read at the time.  Need to work
 through these.  This is what is known now.
+
+Message 4:
+
+Bytes 3 and 4 are for UV Index.  The first byte is MSB and the second LSB. 
+The lower nibble of the 4th byte is always 5, so they only use the first
+three nibbles.  A value of FF in the third byte indicates that no sensor is 
+present.
+
+The UV index is calcuated as follows.
+
+  UV Index = (byte3 << 8 + byte4) >> 6) / 50.0
+
+Reference: http://www.wxforum.net/index.php?topic=18489.msg178506#msg178506
+Reference: http://www.wxforum.net/index.php?topic=18489.msg190548#msg190548
+
+Message 6:
+
+Bytes 3 and 4 are solar radiation.  The first byte is MSB and the second LSB. 
+The lower nibble of the 4th byte is again always 5, so they only use the first
+three nibbles.  A value of FF in the third byte indicates that no sensor is 
+present.
+
+  Solar radiation = (byte3 << 8 + byte4) >> 6) * 1.757936
+
+Reference: http://www.wxforum.net/index.php?topic=18489.msg178506#msg178506
+Reference: http://www.wxforum.net/index.php?topic=18489.msg190548#msg190548
 
 Message 8:
 
